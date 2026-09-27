@@ -197,7 +197,7 @@ export function parsePreviewFileRequest(
  * must not become a way to read a project's source or config files back out
  * through the browser. Extend it only when a real report needs the type.
  */
-const ASSET_CONTENT_TYPES: Record<string, string> = {
+export const ASSET_CONTENT_TYPES: Record<string, string> = {
 	".css": "text/css; charset=utf-8",
 	".js": "text/javascript; charset=utf-8",
 	".png": "image/png",
@@ -213,7 +213,7 @@ const ASSET_CONTENT_TYPES: Record<string, string> = {
 	".otf": "font/otf",
 };
 
-function previewHeaders(contentType: string, csp?: string): Headers {
+export function previewHeaders(contentType: string, csp?: string): Headers {
 	const headers = new Headers({
 		"content-type": contentType,
 		// Preview responses are one student's private files and carry a
@@ -295,6 +295,13 @@ type OpenedFile =
 	| { ok: true; bytes: Uint8Array<ArrayBuffer> }
 	| { ok: false; response: Response };
 
+/** Builds the error page for a refused read; lets other callers word their own. */
+export type FileErrorDocument = (
+	heading: string,
+	detail: string,
+	status: number,
+) => Response;
+
 /**
  * Open a validated project-relative path and read it, refusing anything that is
  * not a regular file inside the real project root.
@@ -305,20 +312,17 @@ type OpenedFile =
  * closes that race — it names the inode we opened, which cannot be re-pointed
  * underneath us. `O_NOFOLLOW` covers the final segment.
  */
-async function readVerifiedProjectFile(
+export async function readVerifiedProjectFile(
 	projectRoot: string,
 	relativePath: string,
 	maxBytes: number,
+	fail: FileErrorDocument = errorDocument,
 ): Promise<OpenedFile> {
 	const target = resolve(projectRoot, relativePath);
 	if (!isInsideDirectory(projectRoot, target)) {
 		return {
 			ok: false,
-			response: errorDocument(
-				"Not available",
-				"That path is outside the project.",
-				403,
-			),
+			response: fail("Not available", "That path is outside the project.", 403),
 		};
 	}
 	const realProjectRoot = await realpath(projectRoot).catch(() => projectRoot);
@@ -331,16 +335,12 @@ async function readVerifiedProjectFile(
 		if (code === "ELOOP") {
 			return {
 				ok: false,
-				response: errorDocument(
-					"Not available",
-					"That path is a symbolic link.",
-					403,
-				),
+				response: fail("Not available", "That path is a symbolic link.", 403),
 			};
 		}
 		return {
 			ok: false,
-			response: errorDocument(
+			response: fail(
 				"File not found",
 				"This file is no longer available. Refresh the document list.",
 				404,
@@ -352,7 +352,7 @@ async function readVerifiedProjectFile(
 		if (!(await isOpenFileInsideRoot(handle.fd, realProjectRoot))) {
 			return {
 				ok: false,
-				response: errorDocument(
+				response: fail(
 					"Not available",
 					"That path is outside the project.",
 					403,
@@ -363,7 +363,7 @@ async function readVerifiedProjectFile(
 		if (!stats.isFile()) {
 			return {
 				ok: false,
-				response: errorDocument(
+				response: fail(
 					"Not available",
 					"That path is not a regular file.",
 					403,
@@ -373,7 +373,7 @@ async function readVerifiedProjectFile(
 		if (stats.size > maxBytes) {
 			return {
 				ok: false,
-				response: errorDocument(
+				response: fail(
 					"File is too large",
 					`This file is ${Math.round(stats.size / (1024 * 1024))} MB; Preview stops at ${Math.round(maxBytes / (1024 * 1024))} MB.`,
 					413,
@@ -389,7 +389,7 @@ async function readVerifiedProjectFile(
 		if (bytesRead > stats.size) {
 			return {
 				ok: false,
-				response: errorDocument(
+				response: fail(
 					"File changed",
 					"This file changed while it was being read. Refresh to try again.",
 					409,

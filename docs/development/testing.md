@@ -40,6 +40,7 @@ Runs Bun's built-in test runner across the control plane
 - Lessons catalog: bundled catalog load, module discovery, catalog integrity
 - PathPlanner: deploy-file access controls and static asset routing
 - Preview: document discovery, file serving, path safety, and signed tokens
+- Dashboards: manifest validation, directory-scoped tokens, file serving and CORS, bridge injection, and executing the serialized `window.coderunner` script
 - Security: SSRF/path-traversal/command-injection validators, admin-route enumeration
 - Property-based tests via `fast-check`: URL validation, slug generation, contract schema round-trips, audit-filter SQL parameterization
 - Metrics: route-templating cardinality
@@ -58,6 +59,7 @@ Runs Vitest inside `apps/web/`. Coverage includes:
 - Keyboard and gamepad mappings
 - PathPlanner iframe URL, pane switching, keyboard navigation, and saved tab choice
 - Preview document loading, selection, refresh, and failure states
+- Dashboard NT4 relay (subscriptions, coalescing, publish type checks) and dashboard tabs in the pane switcher
 
 ### `bun run e2e`: Playwright mocked tier
 
@@ -78,6 +80,7 @@ login→editor→run→telemetry→driver-station flow, including:
 - Telemetry: AdvantageScope iframe load, NT4 per-workspace isolation
 - Sim pane tools: AdvantageScope selected first, the PathPlanner iframe mounted while hidden, tab switching without unloading it, the tab choice surviving a reload, and a project swap reloading PathPlanner
 - Preview: Markdown and HTML delivery, refresh, project switching, console lessons, and browser isolation
+- Dashboards: a sandboxed ES-module dashboard receiving and publishing NT4 values through the bridge, and no tabs without a manifest
 - Admin: capacity cap enforcement, audit log entries, user management
 - Public routes: health check, OpenAPI endpoint
 

@@ -1,7 +1,10 @@
 import { FileText, Replace } from "lucide-react";
 import type { ReactNode } from "react";
 import coderunnerHeaderImg from "@/assets/coderunner-header.png";
-import { SimPaneTabSelector } from "@/components/SimPaneSwitcher";
+import {
+	type SimPaneDashboardTab,
+	SimPaneTabSelector,
+} from "@/components/SimPaneSwitcher";
 import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 
@@ -13,6 +16,8 @@ interface TopbarProps {
 	onSwitchProject: () => void;
 	/** Only for layouts that render the sim pane; requires a `SimPaneTabs` root. */
 	showSimPaneTabs?: boolean;
+	/** Project dashboards, shown as extra sim-pane tabs after Preview. */
+	dashboardTabs?: readonly SimPaneDashboardTab[];
 	/**
 	 * Console (`plain-java`) lessons have no pane selector, so Preview gets a
 	 * plain show/hide button in the same slot. Undefined hides the control.
@@ -30,6 +35,7 @@ export function Topbar({
 	isAdmin,
 	onSwitchProject,
 	showSimPaneTabs = false,
+	dashboardTabs,
 	previewOpen,
 	onTogglePreview,
 	layoutMenu,
@@ -44,7 +50,12 @@ export function Topbar({
 				</strong>
 			</div>
 			<div className="ml-auto flex flex-wrap items-center gap-2 min-[1100px]:gap-5">
-				{showSimPaneTabs && <SimPaneTabSelector onReveal={onRevealRightPane} />}
+				{showSimPaneTabs && (
+					<SimPaneTabSelector
+						onReveal={onRevealRightPane}
+						dashboards={dashboardTabs}
+					/>
+				)}
 				{!showSimPaneTabs && onTogglePreview && (
 					<Button
 						type="button"

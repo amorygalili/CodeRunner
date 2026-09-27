@@ -23,6 +23,11 @@ import type { WorkspaceRuntimeProvider } from "../runtime";
 import type { AppStorage } from "../storage";
 import { webAssetResponse, webShellResponse } from "./assets";
 import {
+	DASHBOARD_FILES_PREFIX,
+	dashboardFileResponse,
+	dashboardsResponse,
+} from "./dashboards";
+import {
 	deployFileDeleteResponse,
 	deployFilesSnapshotResponse,
 	deployFileWriteResponse,
@@ -164,6 +169,26 @@ export async function handleWorkspaceRoute(
 			workspace,
 			url,
 			suffix.slice(PREVIEW_FILES_PREFIX.length),
+		);
+	}
+
+	// --- Dashboard resources: same arrangement as Preview, same reasons ---
+	// Dashboard frames are sandboxed without `allow-same-origin` too, so their
+	// assets are authorised by a path token (scoped to the dashboard's own
+	// directory) instead of the cookie. See `dashboard-token.ts`.
+	if (suffix.startsWith(DASHBOARD_FILES_PREFIX)) {
+		if (request.method !== "GET") {
+			return jsonResponse({ error: "Method not allowed." }, { status: 405 });
+		}
+		const workspace = storage.findWorkspaceBySlug(slug);
+		if (!workspace) {
+			return jsonResponse({ error: "Not found." }, { status: 404 });
+		}
+		return dashboardFileResponse(
+			storage.config.sessionSecret,
+			workspace,
+			url,
+			suffix.slice(DASHBOARD_FILES_PREFIX.length),
 		);
 	}
 
@@ -531,6 +556,11 @@ export async function handleWorkspaceRoute(
 			storage.config.sessionSecret,
 			auth.workspace,
 		);
+	}
+
+	// --- Custom web dashboards declared by the project ---
+	if (suffix === "/api/dashboards" && request.method === "GET") {
+		return dashboardsResponse(storage.config.sessionSecret, auth.workspace);
 	}
 
 	// --- Deploy files (PathPlanner) endpoints ---

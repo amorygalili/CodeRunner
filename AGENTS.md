@@ -19,6 +19,7 @@ apps/control/                  Bun control plane: HTTP, WS, sessions, orchestrat
 apps/control/src/app.ts          slim factory + top-level fetch dispatcher
 apps/control/src/app/            response/asset/proxy/status helpers + admin, workspace, websocket route groups
 apps/control/src/app/preview*.ts discovery/serving, Markdown rendering, and the signed path token for Preview
+apps/control/src/app/dashboard*.ts custom dashboards: manifest listing, scoped path token, file serving, injected window.coderunner bridge
 apps/control/src/containers.ts   barrel re-exporting the public container surface
 apps/control/src/containers/     Docker client, metadata, ports, lifecycle, and the LocalDockerRuntimeProvider class
 apps/control/src/metrics.ts      Prometheus registry, metric handles, route-templating helpers
@@ -28,6 +29,7 @@ packages/contracts/            Shared API schemas, message types, and path rules
 containers/code/               V2 merged VSCodium + sim container
 containers/control/            Control-plane image: multi-stage build burying the emsdk/AdvantageScope compile, the coderunner dispatching entrypoint
 catalog/                       Bundled (zero-config) lesson catalog: modules.json + modules/<id>/, baked into the code image
+templates/dashboard-react/      React + Vite + TS starter for lesson dashboards (standalone; not a workspace package, biome-excluded)
 lessons-repo-root/             Staging for the standalone remote lessons repo (will move out of this repo); not used by the app build
 scripts/                       TypeScript utility scripts run by Bun
 patches/advantagescope/        Source-level AS Lite patches
@@ -76,6 +78,20 @@ show/hide button in the selector's slot; `IDELayout` splits `showRightPane`
 from `showDriverStation` to make that possible. See
 `docs/decisions/041-project-preview.md` and
 [`docs/using-coderunner.md`](./docs/using-coderunner.md).
+
+**Custom web dashboards (post-V2):** a project can declare dashboards in
+`.coderunner/dashboards.json`; each becomes a sim-pane tab after Preview
+(robot layout only). Dashboard files are served from
+`/u/:slug/api/dashboards/files/<token>/` — a path token scoped to the entry's
+directory, 8h TTL, dispatched ahead of the cookie check like Preview — into a
+`sandbox="allow-scripts"` opaque-origin frame. The control plane injects a
+`window.coderunner` bridge script into the dashboard HTML; the shell owns one
+NT4 client (`apps/web/src/lib/nt4/`, via `/u/:slug/sim/nt4`) and relays topics
+per frame over postMessage (`apps/web/src/lib/dashboard-host.ts`). Protocol
+types live in contracts. The bundled `robot-starter` lesson ships a plain-JS
+example; `templates/dashboard-react/` is the React starter. See
+`docs/decisions/043-custom-web-dashboards.md` and
+[`docs/lessons/custom-dashboards.md`](./docs/lessons/custom-dashboards.md).
 
 **Containerized control plane (post-V2):** the control plane ships as a Docker
 image (`containers/control/Dockerfile` → `ghcr.io/mathewdunne/coderunner-control`)
@@ -134,7 +150,7 @@ arch-independent). See `docs/decisions/035-multi-arch-images-and-workflow-split.
 ## Key References
 
 - `docs/` + `website/` — docs site content and Docusaurus config; published at `https://mathewdunne.github.io/CodeRunner/`; run `bun run docs:dev` to browse locally, `bun run docs:build` to build.
-- `docs/decisions/` — all architecture decision logs (011–041 active; 001–010 archived under `docs/decisions/archive/`).
+- `docs/decisions/` — all architecture decision logs (011–043 active; 001–010 archived under `docs/decisions/archive/`).
 - Pinned AdvantageScope submodule: `vendor/AdvantageScope` at tag `v26.0.2`.
 
 ## Commands

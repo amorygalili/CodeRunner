@@ -39,6 +39,12 @@ source level in [`patches/advantagescope/001-lite-nt4-endpoint-injection.patch`]
 and injects an NT4 endpoint so AS Lite can run embedded in the CodeRunner page
 (`/scope/?frcEndpoint=postMessage`).
 
+The web shell's NetworkTables client and struct decoder for custom dashboards
+(`apps/web/src/lib/nt4/NT4.ts`, `apps/web/src/lib/nt4/StructDecoder.ts`) are
+**modified** copies of AdvantageScope source files, distributed under the same
+BSD-3-Clause license reproduced below. The NT4 client connects to an injected
+endpoint instead of dialling the robot directly.
+
 CodeRunner redistributes a **modified** PathPlanner web build from the
 [`mathewdunne/pathplanner-web`](https://github.com/mathewdunne/pathplanner-web)
 fork. It adds an embedded entry point and HTTP-backed project file access for

@@ -129,6 +129,20 @@ not cached. Path validation, file type allowlists, symlink checks, and read
 limits keep the endpoint inside the student's project. The full rationale is in
 [decision 041](https://github.com/mathewdunne/CodeRunner/blob/main/docs/decisions/041-project-preview.md).
 
+## Dashboard isolation
+
+Lesson dashboards are untrusted code too, and get the Preview treatment: an
+opaque-origin sandbox, applied both as the iframe attribute and as a response
+header, and a CSP that blocks network connections (`connect-src 'none'`),
+workers, and scripts from anywhere but the dashboard's own files. Their path
+token is signed over the dashboard's directory, so a dashboard can read its own
+build output but not the project's source or another dashboard. The token lasts
+eight hours because a dashboard stays open for a class session. A dashboard
+reaches the robot only through the shell: the shell accepts messages only from
+that frame's own window, validates them against a schema, and type-checks every
+publish. Dashboard capability URLs are not logged. See
+[decision 043](https://github.com/mathewdunne/CodeRunner/blob/main/docs/decisions/043-custom-web-dashboards.md).
+
 ## Container isolation
 
 Each student's container:

@@ -25,3 +25,12 @@ The starter logs a counter that increments every loop and a robot pose that
 drives in a circle, both through AdvantageKit's `Logger.recordOutput(...)`, so
 you can confirm that edit → run → telemetry is working end to end. Edit
 `RobotContainer.java`, click Run, and watch your changes appear in AdvantageScope.
+
+## The Robot Dashboard tab
+
+This lesson also ships a small custom dashboard: open the **Robot Dashboard**
+tab next to AdvantageScope to see the loop counter and the robot's pose update
+live while the robot runs. It is plain HTML, CSS and JavaScript in the
+`dashboard/` folder, declared in `.coderunner/dashboards.json`. Try adding
+another value you log from `RobotContainer.java` to it, then click **Reload**
+in the tab.

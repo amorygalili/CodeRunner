@@ -588,3 +588,155 @@ export type PreviewDocument = z.infer<typeof previewDocumentSchema>;
 export type PreviewDocumentsResponse = z.infer<
 	typeof previewDocumentsResponseSchema
 >;
+
+// --- Custom web dashboards ---
+
+/**
+ * Where a project declares its dashboards. Living in the project (rather than
+ * in the catalog manifest) means a dashboard travels with the files it was
+ * built alongside: lesson modules, team imports and student-authored projects
+ * all get one the same way, and nothing has to be persisted per workspace.
+ */
+export const DASHBOARD_MANIFEST_PATH = ".coderunner/dashboards.json";
+
+/** Tabs are topbar real estate; a lesson that needs more should split. */
+export const MAX_DASHBOARDS = 8;
+
+export const dashboardEntrySchema = previewPathSchema.refine(
+	(value) => /\.html?$/i.test(value),
+	"Dashboard entry must be an .html file.",
+);
+
+export const dashboardManifestSchema = z.object({
+	dashboards: z
+		.array(
+			z.object({
+				title: z.string().trim().min(1).max(40),
+				entry: dashboardEntrySchema,
+			}),
+		)
+		.max(MAX_DASHBOARDS),
+});
+
+export const projectDashboardSchema = z.object({
+	/** Stable within a project: the entry path. */
+	id: z.string().min(1),
+	title: z.string().min(1),
+	entry: previewPathSchema,
+	/**
+	 * Iframe `src`. Carries a path token scoped to the entry's directory, for
+	 * the same opaque-origin reason Preview does (see `preview-token.ts`).
+	 */
+	url: z.string().min(1),
+});
+
+export const dashboardsResponseSchema = z.object({
+	ok: z.literal(true),
+	dashboards: z.array(projectDashboardSchema),
+	/** Set when the manifest exists but could not be read or validated. */
+	error: z.string().nullable(),
+	/** Seconds until the tokens in `dashboards[].url` stop being accepted. */
+	tokenExpiresIn: z.number().int().positive(),
+});
+
+export type DashboardManifest = z.infer<typeof dashboardManifestSchema>;
+export type ProjectDashboard = z.infer<typeof projectDashboardSchema>;
+export type DashboardsResponse = z.infer<typeof dashboardsResponseSchema>;
+
+// --- Dashboard bridge (postMessage between the shell and a dashboard frame) ---
+//
+// A dashboard runs in a sandboxed, opaque-origin frame, so it cannot open the
+// cookie-authenticated NT4 socket itself. The shell owns one NT4 client and
+// relays topics to each frame; the control plane injects a small script into
+// the dashboard document that exposes this as `window.coderunner`.
+
+export const DASHBOARD_BRIDGE_VERSION = 1;
+export const DASHBOARD_CLIENT_CHANNEL = "coderunner-dashboard";
+export const DASHBOARD_HOST_CHANNEL = "coderunner-host";
+
+const ntTopicNameSchema = z.string().min(1).max(512);
+const dashboardSubIdSchema = z.number().int().min(0).max(1_000_000_000);
+
+/** Messages a dashboard frame may send. Untrusted: always parse. */
+export const dashboardClientMessageSchema = z.discriminatedUnion("kind", [
+	z.object({
+		channel: z.literal(DASHBOARD_CLIENT_CHANNEL),
+		kind: z.literal("hello"),
+	}),
+	z.object({
+		channel: z.literal(DASHBOARD_CLIENT_CHANNEL),
+		kind: z.literal("subscribe"),
+		subId: dashboardSubIdSchema,
+		topics: z.array(z.string().max(512)).min(1).max(64),
+		prefix: z.boolean(),
+		/** Seconds between updates, as NT4 defines `periodic`. */
+		periodic: z.number().min(0.01).max(10).optional(),
+	}),
+	z.object({
+		channel: z.literal(DASHBOARD_CLIENT_CHANNEL),
+		kind: z.literal("unsubscribe"),
+		subId: dashboardSubIdSchema,
+	}),
+	z.object({
+		channel: z.literal(DASHBOARD_CLIENT_CHANNEL),
+		kind: z.literal("publish"),
+		topic: ntTopicNameSchema,
+		/** NT4 type string; inferred from the announced topic or the value when omitted. */
+		type: z.string().min(1).max(128).optional(),
+		value: z.unknown(),
+	}),
+]);
+
+export type DashboardClientMessage = z.infer<
+	typeof dashboardClientMessageSchema
+>;
+
+export type DashboardTopicInfo = {
+	name: string;
+	type: string;
+	properties: Record<string, unknown>;
+};
+
+export type DashboardValueUpdate = {
+	topic: string;
+	type: string;
+	value: unknown;
+	/** Robot (server) time in microseconds when known, else client time. */
+	timestamp: number;
+};
+
+export type DashboardRobotState = {
+	/** Whether a robot program is running (built and started). */
+	running: boolean;
+	enabled: boolean;
+	mode: z.infer<typeof dsModeSchema>;
+	eStopped: boolean;
+	alliance: z.infer<typeof allianceStationSchema>;
+};
+
+export type DashboardContext = {
+	bridgeVersion: number;
+	theme: "light" | "dark";
+	dashboard: { id: string; title: string };
+	/** The loaded lesson module id, or null for an import or empty project. */
+	moduleId: string | null;
+	/** Null until the simulator has reported its state. */
+	robot: DashboardRobotState | null;
+};
+
+/** Messages the shell sends to a dashboard frame. */
+export type DashboardHostMessage = {
+	channel: typeof DASHBOARD_HOST_CHANNEL;
+} & (
+	| {
+			kind: "init";
+			context: DashboardContext;
+			connected: boolean;
+			topics: DashboardTopicInfo[];
+	  }
+	| { kind: "context"; context: DashboardContext }
+	| { kind: "connection"; connected: boolean }
+	| { kind: "topics"; announced: DashboardTopicInfo[]; removed: string[] }
+	| { kind: "values"; updates: DashboardValueUpdate[] }
+	| { kind: "error"; message: string }
+);

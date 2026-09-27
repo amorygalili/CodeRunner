@@ -160,6 +160,25 @@ unchanged in the editor. (This means projects that call `addGui()` /
 `addDriverstation()` work without edits, which is useful to know if you base a
 `robot` module on an existing team project.)
 
+## Custom dashboards
+
+A `robot` module can include its own web dashboard: a page that reads and
+writes the robot program's NetworkTables. Students see it as an extra tab next to
+AdvantageScope. Declare it in `.coderunner/dashboards.json` inside the module and
+commit the built page alongside the robot code:
+
+```json
+{
+  "dashboards": [
+    { "title": "Robot Dashboard", "entry": "dashboard/index.html" }
+  ]
+}
+```
+
+The bundled `robot-starter` module includes a plain-JavaScript example. See
+[Custom Dashboards](./custom-dashboards.md) for the `window.coderunner` API and
+the React starter template.
+
 ## The README is the lesson text
 
 Each module's `README.md` is the lesson. When a student loads a module,

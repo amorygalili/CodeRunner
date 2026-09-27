@@ -42,8 +42,8 @@ want to compile and check your code.
 4. Click **Stop** when you are finished, or **Restart** to stop the code and re-run with any changes you've made.
 
 Build output and robot output appear in the **Console** tab. Use the top-bar
-**AdvantageScope**, **PathPlanner** and **Preview** tabs to switch the tool
-beside the editor. AdvantageScope opens by default, and switching tabs does not
+**AdvantageScope**, **PathPlanner** and **Preview** tabs (plus any lesson
+dashboards) to switch the tool beside the editor. AdvantageScope opens by default, and switching tabs does not
 reload any of them.
 
 Drag the dividers to resize panes. Use the caret buttons or **User menu → Layout**
@@ -73,6 +73,17 @@ root `README.md` opens automatically; use the searchable picker to find other
 documents by name or path, including generated files under `build/reports/**`.
 
 Click **Refresh** after a build or edit to see updated changes.
+
+## Dashboards
+
+Some lessons come with their own dashboard, shown as an extra tab after
+**Preview** (the bundled Robot Starter lesson has a **Robot Dashboard** tab). A
+dashboard shows values from your running robot program and can send values back
+to it, for example a slider that sets a speed your code reads.
+
+Dashboards only show live data while the robot is running: click **Start** in
+the Driver Station. The dashboard's toolbar shows whether it is connected. Click
+**Reload** after changing a dashboard's files.
 
 ## Console lessons
 

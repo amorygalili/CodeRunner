@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
+import { toast } from "sonner";
+import { DashboardPane } from "@/components/DashboardPane";
 import { DemoBanner } from "@/components/DemoBanner";
 import { DriverStation } from "@/components/DriverStation";
 import { EditorPane } from "@/components/EditorPane";
@@ -12,6 +14,8 @@ import { SimPanePanels, SimPaneTabs } from "@/components/SimPaneSwitcher";
 import { SwitchProjectDialog } from "@/components/SwitchProjectDialog";
 import { Topbar } from "@/components/Topbar";
 import { useAutoChoosers } from "@/hooks/useAutoChoosers";
+import { useDashboardNetworkTables } from "@/hooks/useDashboardNetworkTables";
+import { useDashboards } from "@/hooks/useDashboards";
 import { useEditorReachability } from "@/hooks/useEditorReachability";
 import { type GamepadInfo, useGamepad } from "@/hooks/useGamepad";
 import { useGamepadChannel } from "@/hooks/useGamepadChannel";
@@ -20,7 +24,7 @@ import { useRunChannel } from "@/hooks/useRunChannel";
 import { useScopeHandshake } from "@/hooks/useScopeHandshake";
 import { useSession } from "@/hooks/useSession";
 import { useSimulationState } from "@/hooks/useSimulationState";
-import { isWorkspaceSlug } from "@/lib/contracts";
+import { type DashboardRobotState, isWorkspaceSlug } from "@/lib/contracts";
 import { gamepadFrameToWpilib } from "@/lib/gamepad-mapping";
 import {
 	gamepadStateToVisualizerFrame,
@@ -78,6 +82,52 @@ export function WorkspacePage() {
 		waitingSeconds: editorWaitingSeconds,
 		errorDetail: editorErrorDetail,
 	} = useEditorReachability(editorUrl);
+	// Custom dashboards the project declares (.coderunner/dashboards.json).
+	// Robot layouts only: they talk to the robot program over NT4.
+	const dashboards = useDashboards(simSlug, reloadNonce);
+	const dashboardNt = useDashboardNetworkTables(
+		simSlug,
+		dashboards.dashboards.length > 0,
+	);
+	// Surface a broken manifest to the author once per distinct problem.
+	useEffect(() => {
+		if (dashboards.error) {
+			toast.error("Dashboards could not be loaded", {
+				description: dashboards.error,
+			});
+		}
+	}, [dashboards.error]);
+	const simStatus = simulation.status;
+	const dashboardRobot = useMemo<DashboardRobotState | null>(
+		() =>
+			simStatus
+				? {
+						running: simStatus.run.status === "running",
+						enabled: simStatus.driverStation.enabled,
+						mode: simStatus.driverStation.mode,
+						eStopped: simStatus.driverStation.eStopped,
+						alliance: simStatus.driverStation.alliance,
+					}
+				: null,
+		[simStatus],
+	);
+	const dashboardRobotKey = JSON.stringify(dashboardRobot);
+	// The status poll returns a new object every second; only hand dashboards
+	// a new context when something they can see actually changed.
+	// biome-ignore lint/correctness/useExhaustiveDependencies: keyed on the serialised state.
+	const stableDashboardRobot = useMemo(
+		() => dashboardRobot,
+		[dashboardRobotKey],
+	);
+	const dashboardIds = useMemo(
+		() => (dashboards.loaded ? dashboards.dashboards.map((d) => d.id) : null),
+		[dashboards.loaded, dashboards.dashboards],
+	);
+	const dashboardTabs = useMemo(
+		() => dashboards.dashboards.map(({ id, title }) => ({ id, title })),
+		[dashboards.dashboards],
+	);
+
 	const scopeFrameRef = useRef<HTMLIFrameElement>(null);
 	useScopeHandshake(simSlug, scopeFrameRef);
 
@@ -227,6 +277,7 @@ export function WorkspacePage() {
 		<SimPaneTabs
 			className="flex h-screen flex-col gap-0 bg-background"
 			onPreviewActivated={onPreviewActivated}
+			dashboardIds={isConsoleModule ? [] : dashboardIds}
 		>
 			{isDemo && <DemoBanner />}
 			<Topbar
@@ -236,6 +287,7 @@ export function WorkspacePage() {
 				isAdmin={isAdmin}
 				onSwitchProject={() => setSwitchOpen(true)}
 				showSimPaneTabs={!isConsoleModule}
+				dashboardTabs={dashboardTabs}
 				previewOpen={layout.rightVisible}
 				onTogglePreview={
 					isConsoleModule
@@ -295,6 +347,20 @@ export function WorkspacePage() {
 								<PathPlannerPane key={reloadNonce} workspaceSlug={simSlug} />
 							}
 							preview={previewPane}
+							dashboards={dashboards.dashboards.map((dashboard) => ({
+								id: dashboard.id,
+								render: (active: boolean) => (
+									<DashboardPane
+										dashboard={dashboard}
+										service={dashboardNt.service}
+										connected={dashboardNt.connected}
+										active={active}
+										moduleId={currentModule}
+										robot={stableDashboardRobot}
+										onReload={dashboards.refresh}
+									/>
+								),
+							}))}
 						/>
 					)
 				}

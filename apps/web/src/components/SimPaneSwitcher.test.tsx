@@ -203,3 +203,103 @@ describe("SimPaneSwitcher", () => {
 		expect(scopeTab).toHaveAttribute("aria-selected", "false");
 	});
 });
+
+describe("SimPaneSwitcher dashboards", () => {
+	afterEach(() => {
+		sessionStorage.clear();
+	});
+
+	const DASHBOARDS = [
+		{ id: "dashboards/shooter/index.html", title: "Shooter" },
+	];
+
+	function renderWithDashboards(dashboardIds: string[] | null) {
+		const active: Record<string, boolean> = {};
+		const result = render(
+			<SimPaneTabs dashboardIds={dashboardIds}>
+				<SimPaneTabSelector dashboards={dashboardIds ? DASHBOARDS : []} />
+				<SimPanePanels
+					scope={<div>scope-pane</div>}
+					pathplanner={<div>pathplanner-pane</div>}
+					preview={<div>preview-pane</div>}
+					dashboards={(dashboardIds ? DASHBOARDS : []).map((d) => ({
+						id: d.id,
+						render: (isActive: boolean) => {
+							active[d.id] = isActive;
+							return <div>{`${d.title}-pane`}</div>;
+						},
+					}))}
+				/>
+			</SimPaneTabs>,
+		);
+		return { ...result, active };
+	}
+
+	test("adds a tab per dashboard after Preview and tells the panel when it shows", () => {
+		const { active } = renderWithDashboards(DASHBOARDS.map((d) => d.id));
+
+		const tabs = screen.getAllByRole("tab").map((tab) => tab.textContent);
+		expect(tabs).toEqual([
+			"AdvantageScope",
+			"PathPlanner",
+			"Preview",
+			"Shooter",
+		]);
+		expect(active["dashboards/shooter/index.html"]).toBe(false);
+
+		fireEvent.click(screen.getByRole("tab", { name: "Shooter" }));
+
+		expect(screen.getByRole("tab", { name: "Shooter" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+		expect(screen.getByText("Shooter-pane").parentElement).toHaveProperty(
+			"hidden",
+			false,
+		);
+		expect(active["dashboards/shooter/index.html"]).toBe(true);
+		expect(sessionStorage.getItem("coderunner:sim-pane-tab")).toBe(
+			"dashboard:dashboards/shooter/index.html",
+		);
+	});
+
+	test("a remembered dashboard waits for the list, then reopens", () => {
+		sessionStorage.setItem(
+			"coderunner:sim-pane-tab",
+			"dashboard:dashboards/shooter/index.html",
+		);
+		const { rerender } = renderWithDashboards(null);
+		expect(screen.getByRole("tab", { name: "AdvantageScope" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+
+		rerender(
+			<SimPaneTabs dashboardIds={DASHBOARDS.map((d) => d.id)}>
+				<SimPaneTabSelector dashboards={DASHBOARDS} />
+				<SimPanePanels
+					scope={<div>scope-pane</div>}
+					pathplanner={<div>pathplanner-pane</div>}
+					preview={<div>preview-pane</div>}
+					dashboards={DASHBOARDS.map((d) => ({
+						id: d.id,
+						render: () => <div>{`${d.title}-pane`}</div>,
+					}))}
+				/>
+			</SimPaneTabs>,
+		);
+		expect(screen.getByRole("tab", { name: "Shooter" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+	});
+
+	test("falls back to AdvantageScope when the project no longer declares it", () => {
+		sessionStorage.setItem("coderunner:sim-pane-tab", "dashboard:gone.html");
+		renderWithDashboards(DASHBOARDS.map((d) => d.id));
+		expect(screen.getByRole("tab", { name: "AdvantageScope" })).toHaveAttribute(
+			"aria-selected",
+			"true",
+		);
+	});
+});

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<title>Robot Dashboard</title>
+		<link rel="stylesheet" href="dashboard.css" />
+		<script src="dashboard.js" defer></script>
+	</head>
+	<body>
+		<header>
+			<span id="nt-dot" class="dot"></span>
+			<span id="nt-status">Waiting for robot…</span>
+			<span id="robot-state" class="muted"></span>
+		</header>
+		<main>
+			<section class="card">
+				<h2>Loop counter</h2>
+				<p id="counter" class="big">—</p>
+			</section>
+			<section class="card">
+				<h2>Robot pose</h2>
+				<canvas id="field" width="320" height="160"></canvas>
+				<p id="pose" class="muted">Click Start in the Driver Station.</p>
+			</section>
+		</main>
+	</body>
+</html>

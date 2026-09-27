@@ -19,6 +19,8 @@ export type FakeNt4Handle = {
 	receivedFrames(): Array<unknown>;
 	/** Push a JSON frame to all connected clients */
 	pushFrame(frame: unknown): void;
+	/** Push a binary (MessagePack) frame to all connected clients */
+	pushBinary(data: Uint8Array): void;
 	/** Number of active WS connections */
 	connections(): number;
 	/** Wait until at least `n` connections have been opened */
@@ -110,6 +112,9 @@ export async function startFakeNt4(
 		receivedFrames: () => [...receivedFrames],
 		pushFrame(frame: unknown) {
 			const data = typeof frame === "string" ? frame : JSON.stringify(frame);
+			for (const ws of conns) ws.send(data);
+		},
+		pushBinary(data: Uint8Array) {
 			for (const ws of conns) ws.send(data);
 		},
 		connections: () => conns.size,

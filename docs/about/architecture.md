@@ -138,6 +138,19 @@ requests because the sandbox does not receive the session cookie. See
 [Preview isolation](./security-model.md#preview-isolation) and
 [decision 041](https://github.com/mathewdunne/CodeRunner/blob/main/docs/decisions/041-project-preview.md).
 
+## How custom dashboards reach the robot
+
+A project can declare web dashboards in `.coderunner/dashboards.json`; each
+becomes a tab in the right pane. Dashboard files are served from the project
+directory into the same kind of opaque-origin sandbox as Preview, authorized by
+a path token scoped to the dashboard's own folder. The dashboard never opens a
+network connection itself: the control plane injects a `window.coderunner`
+script, and the web shell relays NetworkTables values between one shared NT4
+client (through the authenticated `/u/:slug/sim/nt4` proxy) and each dashboard
+frame over `postMessage`. See
+[Custom Dashboards](../lessons/custom-dashboards.md) and
+[decision 043](https://github.com/mathewdunne/CodeRunner/blob/main/docs/decisions/043-custom-web-dashboards.md).
+
 ## Persistence and data layout
 
 The control plane uses a single **SQLite** database (`data/app.db` by default)

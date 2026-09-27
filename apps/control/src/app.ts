@@ -196,10 +196,14 @@ export async function createApp(
 		const url = new URL(request.url);
 		const start = performance.now();
 		const route = templateRoute(url.pathname);
-		// Preview file URLs contain a bearer capability and a private project path.
-		// Keep both out of logs; the templated route is enough to identify traffic.
+		// Preview and dashboard file URLs contain a bearer capability and a
+		// private project path. Keep both out of logs; the templated route is
+		// enough to identify traffic.
 		const loggedPath =
-			route === "/u/:slug/api/preview/files/*" ? route : url.pathname;
+			route === "/u/:slug/api/preview/files/*" ||
+			route === "/u/:slug/api/dashboards/files/*"
+				? route
+				: url.pathname;
 		httpRequestsInFlight.inc();
 		let response: Response;
 		let observedStatus: number;

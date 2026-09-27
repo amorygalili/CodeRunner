@@ -38,9 +38,7 @@ export const PREVIEW_TOKEN_TTL_SECONDS = 15 * 60;
 const SIGNING_LABEL = "coderunner.preview.v1";
 
 function sign(secret: string, workspaceId: string, expiresAt: number): string {
-	return createHmac("sha256", secret)
-		.update(`${SIGNING_LABEL}.${workspaceId}.${expiresAt}`)
-		.digest("base64url");
+	return signPathToken(secret, `${SIGNING_LABEL}.${workspaceId}.${expiresAt}`);
 }
 
 /** Mint a token authorising reads of `workspaceId`'s project tree. */
@@ -77,12 +75,28 @@ export function verifyPreviewToken(
 	const expiresAt = Number(expiresAtRaw);
 	if (expiresAt <= nowSeconds) return false;
 
-	const expected = sign(secret, workspaceId, expiresAt);
-	// Compare over the *expected* signature's byte length so a truncated or
-	// padded candidate fails on length rather than throwing out of
-	// timingSafeEqual.
+	return pathTokenSignaturesMatch(
+		sign(secret, workspaceId, expiresAt),
+		signature,
+	);
+}
+
+/** HMAC-SHA256 over `message`, base64url. Shared with other path-token schemes. */
+export function signPathToken(secret: string, message: string): string {
+	return createHmac("sha256", secret).update(message).digest("base64url");
+}
+
+/**
+ * Constant-time signature comparison. Compares over the *expected* signature's
+ * byte length so a truncated or padded candidate fails on length rather than
+ * throwing out of timingSafeEqual.
+ */
+export function pathTokenSignaturesMatch(
+	expected: string,
+	candidate: string,
+): boolean {
 	const expectedBytes = Buffer.from(expected, "utf8");
-	const candidateBytes = Buffer.from(signature, "utf8");
+	const candidateBytes = Buffer.from(candidate, "utf8");
 	if (expectedBytes.length !== candidateBytes.length) return false;
 	return timingSafeEqual(expectedBytes, candidateBytes);
 }
