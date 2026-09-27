@@ -1,0 +1,8 @@
+# Local-only override (auto-loaded by `docker compose`): publish the control
+# plane on all interfaces so LAN devices can reach http://<LAN-IP>:4000.
+# `!override` replaces the base file's loopback-only port list instead of
+# appending to it (appending would double-bind host port 4000).
+services:
+  control:
+    ports: !override
+      - "0.0.0.0:4000:4000"
