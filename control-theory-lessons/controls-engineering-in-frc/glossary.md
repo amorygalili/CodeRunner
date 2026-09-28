@@ -1,0 +1,50 @@
+# Glossary
+
+- **agent**: An independent actor being controlled through autonomy or human-in-the-loop (e.g., a robot, aircraft, etc.).
+- **control effort**: A term describing how much force, pressure, etc. an actuator is exerting.
+- **control input**: The input of a plant used for the purpose of controlling it.
+- **control law**: Also known as control policy, is a mathematical formula used by the controller to determine the input u that is sent to the plant. This control law is designed to drive the system from its current state to some other desired state.
+- **control system**: Monitors and controls the behavior of a system.
+- **controller**: Applies an input to a plant to bring about a desired system state by driving the difference between a reference signal and the output to zero.
+- **discretization**: The process by which a continuous (e.g., analog) system or controller design is converted to discrete (e.g., digital).
+- **disturbance**: An external force acting on a system that isn’t included in the system’s model.
+- **disturbance rejection**: The quality of a feedback control system to compensate for external forces to reach a desired reference.
+- **error**: Reference minus an output or state.
+- **feedback controller**: Used in positive or negative feedback with a plant to bring about a desired system state by driving the difference between a reference signal and the output to zero.
+- **feedback gain**: The gain from the output to an earlier point in a control system diagram.
+- **feedforward controller**: A controller that injects information about the system’s dynamics (like a model does) or the desired movement. The feedforward handles parts of the control actions we already know must be applied to make a system track a reference, then the feedback controller compensates for what we do not or cannot know about the system’s behavior at runtime.
+- **gain**: A proportional value that shows the relationship between the magnitude of an input signal to the magnitude of an output signal at steady-state.
+- **gain margin**: See section <a href="#subsec:gain_phase_margin" data-reference-type="ref" data-reference="subsec:gain_phase_margin">[subsec:gain_phase_margin]</a> on gain and phase margin.
+- **impulse response**: The response of a system to the Dirac delta function.
+- **input**: An input to the plant (hence the name) that can be used to change the plant’s state.
+- **linearization**: A method by which a nonlinear system’s dynamics are approximated by a linear system.
+- **localization**: The process of using measurements of the environment to determine an agent’s pose.
+- **model**: A set of mathematical equations that reflects some aspect of a physical system’s behavior.
+- **noise immunity**: The quality of a system to have its performance or stability unaffected by noise in the outputs (see also: robustness).
+- **observer**: In control theory, a system that estimates the internal state of a given real system from measurements of the input and output of the real system.
+- **open-loop gain**: The gain directly from the input to the output, ignoring loops.
+- **output**: Measurements from sensors.
+- **output-based control**: Controls the system’s state via the outputs.
+- **overshoot**: The amount by which a system’s state surpasses the reference after rising toward it.
+- **phase margin**: See section <a href="#subsec:gain_phase_margin" data-reference-type="ref" data-reference="subsec:gain_phase_margin">[subsec:gain_phase_margin]</a> on gain and phase margin.
+- **plant**: The system or collection of actuators being controlled.
+- **pose**: The position and orientation of an agent in the world, which is represented by all or part of the agent’s state.
+- **process variable**: The term used to describe the output of a plant in the context of PID control.
+- **realization**: In control theory, this is an implementation of a given input-output behavior as a state-space model.
+- **reference**: The desired state. This value is used as the reference point for a controller’s error calculation.
+- **regulator**: A controller that attempts to minimize the error from a constant reference in the presence of disturbances.
+- **rise time**: The time a system takes to initially reach the reference after applying a step input.
+- **robustness**: The quality of a feedback control system to remain stable in response to disturbances and uncertainty.
+- **setpoint**: The term used to describe the reference of a PID controller.
+- **settling time**: The time a system takes to settle at the reference after a step input is applied.
+- **state**: A characteristic of a system (e.g., velocity) that can be used to determine the system’s future behavior.
+- **state feedback**: Uses state instead of output in feedback.
+- **steady-state error**: Error after system reaches equilibrium.
+- **step input**: A system input that is $0$ for $t < 0$ and a constant greater than $0$ for $t \geq 0$. A step input that is $1$ for $t \geq 0$ is called a unit step input.
+- **step response**: The response of a system to a step input.
+- **stochastic process**: A process whose model is partially or completely defined by random variables.
+- **system**: A term encompassing a plant and its interaction with a controller and observer, which are treated as a single entity. Mathematically speaking, a system maps inputs to outputs through a linear combination of states.
+- **system response**: The behavior of a system over time for a given input.
+- **time-invariant**: The system’s fundamental response does not change over time.
+- **tracking**: In control theory, the process of making the output of a control system follow the reference.
+- **unity feedback**: A feedback network in a control system diagram with a feedback gain of 1.

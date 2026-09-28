@@ -131,7 +131,7 @@ write_files:
         # JSON logs flow stdout → docker json-file → Alloy loki.source.docker →
         # Grafana Cloud Loki. Don't change without updating that pipeline below.
         echo "LOG_FORMAT=json"
-        echo "LESSONS_CATALOG_REPO=mathewdunne/CodeRunner-Lessons"
+        echo "LESSONS_CATALOG_REPO=frc2423/CodeRunner-Lessons"
         # Run the control container as the APP_USER that owns DATA_DIR (chowned
         # above), not root, so /data writes and the derived workspace uid line
         # up. The docker group gid lets the non-root process reach the socket.
