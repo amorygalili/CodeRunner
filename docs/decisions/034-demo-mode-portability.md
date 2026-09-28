@@ -109,7 +109,16 @@ fixes were rejected:
   convert a masked problem into a live one.
 
 Both would be unblocked by making the exec path run as `abc`. Until then the
-chown stays, and the demo-mode volume makes it cheap enough not to matter. Note
+chown stays, and the demo-mode volume makes it cheap enough not to matter.
+
+*(Update 2026-09-27: `start-sim.sh` now drops to `abc` via `s6-setuidgid` when
+started as root, after handing back any root-owned leftovers in the project and
+the sim's project cache dir. This fixed a live bug: Start, then an editor
+**Build**, failed with "Failed to clean up output files for task
+':spotlessJava'" because the sim had left root-owned `build/` outputs. The
+control plane still execs as root, so the script can do that repair. The
+boot-time `/config` chown is unchanged; it can now be reconsidered as the note
+below describes.)* Note
 the hidden coupling: raising `IDLE_STOP_MINUTES` substantially, or making that
 chown conditional, would expose the root-owned-cache problem with no obvious
 connection to the change.

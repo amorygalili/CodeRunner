@@ -382,13 +382,14 @@ test.describe("real workspace Java tooling", () => {
 			]);
 			expect(classVersion.stdout).toContain("major version: 61");
 
+			// Start the way the control plane does: a plain `docker exec`, which
+			// runs as root. start-sim.sh must still build and run as abc, or it
+			// leaves root-owned files that break the student's editor builds.
 			await docker([
 				"exec",
-				"--user",
-				"abc",
-				"--env",
-				"HOME=/config",
 				robotWorkspace.name,
+				"bash",
+				"-lc",
 				"/usr/local/bin/start-sim.sh",
 			]);
 			const simulationLog = await waitFor(
@@ -404,6 +405,14 @@ test.describe("real workspace Java tooling", () => {
 				180_000,
 			);
 			expect(simulationLog).toContain("BUILD SUCCESSFUL");
+			const simOwnership = await docker([
+				"exec",
+				robotWorkspace.name,
+				"bash",
+				"-lc",
+				'ps -o user= -p "$(cat /config/sim.pid)"; find /workspace/project /config/.gradle-project-sim -xdev -uid 0 -print | head -5',
+			]);
+			expect(simOwnership.stdout.trim()).toBe("abc");
 			console.log("[java-smoke] simulation started; stopping it");
 			await docker([
 				"exec",

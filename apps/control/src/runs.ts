@@ -472,6 +472,11 @@ export class RunManager {
 			"stderr",
 			`Run timed out before simulator readiness after ${Math.round(timeoutMs / 1000)} seconds.`,
 		);
+		// Killing the local `docker exec` client does not signal anything inside
+		// the container, and start-sim.sh detaches the build/robot with setsid.
+		// Without this the robot keeps starting up and runs orphaned while the
+		// run reports failed.
+		this.stopContainerSim(job.workspace.id);
 		job.command?.kill("SIGTERM");
 		this.finishJob(job, "failed", null);
 	}

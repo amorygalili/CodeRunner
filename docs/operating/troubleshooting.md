@@ -106,13 +106,21 @@ failure would return.
 
 ## Build times out
 
-**Symptom.** A run shows "failed" after approximately 90 seconds with no
-obvious error. The problem typically occurs on the student's first build of a
-new project.
+**Symptom.** A run fails with "Run timed out before simulator readiness after
+120 seconds", often while the console is still showing Gradle tasks. The
+problem typically occurs on the student's first build of a new project.
 
-**Cause.** The Gradle build exceeded `RUN_BUILD_TIMEOUT_MS` (default: 90000 ms,
-i.e. 90 seconds). Cold-cache first builds can legitimately take 2–3 minutes on
-slower hosts.
+**Cause.** The build and simulator startup together exceeded
+`RUN_BUILD_TIMEOUT_MS` + `SIM_STARTUP_TIMEOUT_MS` (defaults 90 s + 30 s). Cold-cache
+first builds can legitimately take 2–3 minutes on slower hosts.
+
+Docker Desktop on Windows is the most common case: the data directory is a bind
+mount from the Windows filesystem, which makes every Gradle build much slower.
+Measured on one Windows host, a robot lesson's sim build took about 60 s when
+idle and over 2 minutes while the editor's own Java tooling was busy, against
+about 15 s for the same build on a Linux filesystem. Keeping the data directory
+on a Linux filesystem (run the stack from WSL2 with the checkout inside the WSL
+filesystem) fixes the cause; raising the timeout works around it.
 
 **Fix.** Increase the timeout in your `.env`:
 

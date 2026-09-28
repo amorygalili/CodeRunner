@@ -191,6 +191,15 @@ describe("run lifecycle and log streaming", () => {
 				expect(JSON.stringify(aliceMessages)).toContain(
 					"timed out before simulator readiness",
 				);
+				// The simulator itself is stopped, not just the local exec client.
+				await waitFor(() =>
+					fakeDocker.calls.some(
+						(args) =>
+							args[0] === "exec" &&
+							args.at(-1) === "/usr/local/bin/stop-sim.sh" &&
+							args.some((arg) => arg.includes(aliceWorkspace.id.slice(3))),
+					),
+				);
 				expect(controlled.commands[1]?.context.workspace.slug).toBe("bob");
 				expect(bobMessages).toContainEqual({
 					type: "status",
